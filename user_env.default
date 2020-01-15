@@ -1,0 +1,229 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+#=======================================================
+# モジュール変数
+#=======================================================
+#===================
+# sshの設定
+#===================
+ssh = {
+  use: false,
+  private_key: 'id_rsa',
+}
+
+#===================
+# gitの設定
+#===================
+git = {
+  use: false,
+  user: {
+    name: '',
+    email: '',
+  },
+}
+
+#===================
+# user_env_setup.sh作成
+#===================
+# 不要なテンポラリファイル削除
+# Dir.globメソッドはデフォルトでは.や..や.gitkeepは列挙しないので問題なし
+FileUtils.rm(Dir.glob('./guest/tmp/user_env/tmp/*'))
+
+# dotfile操作用のコマンド一覧登録
+commands = [];
+# dotfileコピー
+[
+  {name: ".bashrc", own: 'vagrant:vagrant', mod: '644'},
+  {name: ".bash_profile", own: 'vagrant:vagrant', mod: '644'},
+  {name: ".bash_logout", own: 'vagrant:vagrant', mod: '644'},
+  {name: ".vimrc", own: 'vagrant:vagrant', mod: '644'},
+].each{|df|
+  if File.exists?("./guest/config/home/vagrant/#{df[:name]}") then
+    commands.concat([
+      {
+        op: 'copy',
+        path: df[:name],
+        own: df[:own],
+        mod: df[:mod],
+      },
+    ])
+  end
+}
+# ssh設定
+if ssh[:use] then
+  [
+    {name: ".ssh/config", own: 'vagrant:vagrant', mod: '640'},
+    {name: ".ssh/#{ssh[:private_key]}", own: 'vagrant:vagrant', mod: '600'},
+  ].each{|df|
+    if File.exists?("./guest/config/home/vagrant/#{df[:name]}") then
+      commands.concat([
+        {
+          op: 'copy',
+          path: df[:name],
+          own: df[:own],
+          mod: df[:mod],
+        },
+      ])
+    end
+  }
+  commands.concat([
+    # .bashrc追加 ログイン時にssh-agent起動
+    {
+      op: 'append_string',
+      path: '.bashrc',
+      string: <<-EOS
+        # Setup ssh-agent
+        if [ -f ~/.ssh-agent ]; then
+            . ~/.ssh-agent
+        fi
+        if [ -z "$SSH_AGENT_PID" ] || ! kill -0 $SSH_AGENT_PID; then
+            ssh-agent > ~/.ssh-agent
+            . ~/.ssh-agent
+        fi
+        ssh-add -l >& /dev/null || ssh-add
+      EOS
+    },
+  ])
+end
+# git設定
+if git[:use] then
+  commands.concat([
+    # .bashrc追加 ログイン時にssh-agent起動
+    {
+      op: 'shell',
+      shell: <<-EOS
+        git config --global user.name '#{git[:user][:name]}'
+        git config --global user.email '#{git[:user][:email]}'
+        # push方式
+        git config --global push.default simple
+        # 改行コードの自動変換off
+        git config --global core.autocrlf false
+        # 文字色
+        git config --global color.ui true
+        # 日本語ファイル名のエンコード
+        git config --global core.quotepath false
+        # 認証情報のキャッシュ
+        git config --global credential.helper 'cache --timeout=86400'
+        # エイリアス
+        git config --global alias.st status
+        git config --global alias.df diff
+        git config --global alias.co commit
+        git config --global alias.br branch
+        git config --global alias.ps push
+        git config --global alias.pl pull
+        git config --global alias.ck checkout
+      EOS
+    },
+  ])
+end
+# user_env_setup.sh削除
+commands.concat([
+  {
+    op: 'shell',
+    shell: <<-EOS
+      # user_env_setup.sh削除
+      rm -f /home/vagrant/user_env_setup.sh
+    EOS
+  },
+])
+# dotfile操作用のコマンド作成
+converted_commands = commands.map.with_index{|v, i|
+  src_dir = '/home/vagrant/vagrant/guest/config/home/vagrant'
+  dst_dir = '/home/vagrant'
+  host_tmp_dir = './guest/tmp/user_env/tmp'
+  tmp_dir = '/home/vagrant/vagrant/guest/tmp/user_env/tmp'
+
+  src = "#{src_dir}/#{v[:path]}"
+  dst = "#{dst_dir}/#{v[:path]}"
+
+  has_own = v.key?(:own)
+  own = has_own ? v[:own] : "vagrant:vagrant"
+  op_chown = has_own ? "; chown -R #{own} #{dst}" : ''
+
+  has_mod = v.key?(:mod)
+  mod = has_mod ? v[:mod] : "644"
+  op_chmod = has_mod ? "; chmod -R #{mod} #{dst}" : ''
+
+  has_string = v.key?(:string)
+  timestamp = Time.now.to_i
+  string_fname = "#{timestamp}_#{i}"
+  string_path = "#{tmp_dir}/#{string_fname}"
+  if has_string then
+    File.open("#{host_tmp_dir}/#{string_fname}", "wb:UTF-8") {|f|
+      f.puts v[:string]
+    }
+  end
+
+  case v[:op] 
+  when 'shell' then
+    "#{v[:shell]}"
+
+  when 'copy' then
+    "cp -rf #{src} #{dst}" + op_chown + op_chmod
+
+  when 'copy_string' then
+    "cp -f #{string_path} #{dst}" + op_chown + op_chmod
+
+  when 'append' then
+    "cat #{src} >> #{dst}" + op_chown + op_chmod
+
+  when 'append_string' then
+    "cat #{string_path} >> #{dst}" + op_chown + op_chmod
+
+  when 'mkdir' then
+    "mkdir -p #{dst}" + op_chown + op_chmod
+  end
+}.join("\n")
+# setup.sh作成
+guest_setup = "/home/vagrant/user_env_setup.sh"
+host_setup = "./guest/tmp/user_env/user_env_setup.sh"
+tmp_setup = "/home/vagrant/vagrant/guest/tmp/user_env/user_env_setup.sh"
+File.open(host_setup, "wb:UTF-8") {|f|
+  f.puts converted_commands
+}
+
+
+#=======================================================
+# ユーザ設定
+#=======================================================
+if $user_env.nil?
+  $user_env = {}
+end
+$user_env = $user_env.merge({
+  proxy: {
+    use: false,
+    host: '',
+    port: '',
+    user: '',
+    pass: '',
+  },
+  vagrant_config: {
+    vm: [
+      {
+        provision: [
+          {
+            type: 'shell',
+            privileged: true,
+            inline: <<-SHELL
+              echo '#======================================================='
+              echo '# ユーザ設定 provision start'
+              echo '#======================================================='
+
+              echo '#======================================================='
+              echo '# setup.shコピー'
+              echo '#======================================================='
+              cp -f #{tmp_setup} #{guest_setup}
+              chown vagrant:vagrant #{guest_setup}
+              chmod 744 #{guest_setup}
+
+              echo '#======================================================='
+              echo '# ユーザ設定 provision end'
+              echo '#======================================================='
+            SHELL
+          },
+        ],
+      },
+    ],
+  },
+})
