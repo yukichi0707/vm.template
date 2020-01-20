@@ -1,0 +1,27 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+HOST = '127.0.0.1'
+PORT = '2222'
+USER = 'vagrant'
+PASS = 'vagrant'
+KEY_FILE = 'insecure_private_key'
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; 処理ディレクトリを取得し、公開鍵ファイルを絶対パスにする
+getdir DIR
+ABS_KEY_FILE = DIR
+strconcat ABS_KEY_FILE '\'
+strconcat ABS_KEY_FILE KEY_FILE
+
+MSG = HOST
+strconcat MSG ':'
+strconcat MSG PORT
+strconcat MSG ' /ssh /auth=publickey /user="'
+strconcat MSG USER
+strconcat MSG '" /keyfile="'
+strconcat MSG ABS_KEY_FILE
+strconcat MSG '" /passwd="'
+strconcat MSG PASS
+strconcat MSG '"'
+;messagebox MSG MSG
+
+connect MSG

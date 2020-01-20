@@ -1,0 +1,22 @@
+# vagrantのworkディレクトリはgitで管理しない
+.vagrant/
+# ボックスイメージ配置用のディレクトリです。ボックスイメージは大きいのでgit管理しません。
+boxes/*
+!boxes/.gitkeep
+# 共有ディレクトリです。
+share/*
+!share/.gitkeep
+# 個人用のドットファイル管理用
+guest/config/home/vagrant/*
+!guest/config/home/vagrant/.gitkeep
+# 一時ファイル置き場
+guest/tmp/*
+!guest/tmp/.gitkeep
+guest/tmp/user_env/*
+!guest/tmp/user_env/.gitkeep
+guest/tmp/user_env/tmp/*
+!guest/tmp/user_env/tmp/.gitkeep
+# VM設定ファイル
+vagrant_config
+# 個人用の設定ファイル
+user_env
