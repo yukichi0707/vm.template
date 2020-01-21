@@ -70,18 +70,17 @@ if ssh[:use] then
   commands.concat([
     # .bashrc追加 ログイン時にssh-agent起動
     {
-      op: 'append_string',
-      path: '.bashrc',
-      string: <<-EOS
-        # Setup ssh-agent
-        if [ -f ~/.ssh-agent ]; then
-            . ~/.ssh-agent
-        fi
-        if [ -z "$SSH_AGENT_PID" ] || ! kill -0 $SSH_AGENT_PID; then
-            ssh-agent > ~/.ssh-agent
-            . ~/.ssh-agent
-        fi
-        ssh-add -l >& /dev/null || ssh-add
+      op: 'shell',
+      shell: <<-EOS
+        echo '# Setup ssh-agent' >> /home/vagrant/.bashrc
+        echo 'if [ -f ~/.ssh-agent ]; then' >> /home/vagrant/.bashrc
+        echo '    . ~/.ssh-agent' >> /home/vagrant/.bashrc
+        echo 'fi' >> /home/vagrant/.bashrc
+        echo 'if [ -z "$SSH_AGENT_PID" ] || ! kill -0 $SSH_AGENT_PID; then' >> /home/vagrant/.bashrc
+        echo '    ssh-agent > ~/.ssh-agent' >> /home/vagrant/.bashrc
+        echo '    . ~/.ssh-agent' >> /home/vagrant/.bashrc
+        echo 'fi' >> /home/vagrant/.bashrc
+        ssh-add -l >& /dev/null || ssh-add' >> /home/vagrant/.bashrc
       EOS
     },
   ])
@@ -211,8 +210,6 @@ converted_commands = commands.map.with_index{|v, i|
   when 'append_string' then
     "cat #{string_path} >> #{dst}" + op_chown + op_chmod
 
-  when 'mkdir' then
-    "mkdir -p #{dst}" + op_chown + op_chmod
   end
 }.join("\n")
 # setup.sh作成
