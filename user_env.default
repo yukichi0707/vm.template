@@ -117,6 +117,46 @@ if git[:use] then
     },
   ])
 end
+# git-completion/git-prompt
+commands.concat([
+  {
+    op: 'shell',
+    shell: <<-EOS
+      # git-completion.bash取得
+      curl -s https://raw.githubusercontent.com/git/git/master/contrib/completion/git-completion.bash > /home/vagrant/.git-completion.bash
+      chown vagrant:vagrant /home/vagrant/.git-completion.bash
+      chmod 644 /home/vagrant/.git-completion.bash
+
+      # git-prompt.sh取得
+      curl -s https://raw.githubusercontent.com/git/git/master/contrib/completion/git-prompt.sh > /home/vagrant/.git-prompt.sh
+      chown vagrant:vagrant /home/vagrant/.git-prompt.sh
+      chmod 644 /home/vagrant/.git-prompt.sh
+
+      # .bashrcに追加
+      echo '# .git-completion' >> /home/vagrant/.bashrc
+      echo "source ~/.git-completion.bash" >> ~/.bashrc
+      echo '# .git-prompt' >> /home/vagrant/.bashrc
+      echo 'source ~/.git-prompt.sh' >> /home/vagrant/.bashrc
+      echo '# プロンプトに各種情報を表示' >> /home/vagrant/.bashrc
+      echo 'GIT_PS1_SHOWDIRTYSTATE=1' >> /home/vagrant/.bashrc
+      echo 'GIT_PS1_SHOWUPSTREAM=1' >> /home/vagrant/.bashrc
+      echo 'GIT_PS1_SHOWUNTRACKEDFILES=' >> /home/vagrant/.bashrc
+      echo 'GIT_PS1_SHOWSTASHSTATE=1' >> /home/vagrant/.bashrc
+      echo '############### ターミナルのコマンド受付状態の表示変更' >> /home/vagrant/.bashrc
+      echo '# \\u ユーザ名' >> /home/vagrant/.bashrc
+      echo '# \\h ホスト名' >> /home/vagrant/.bashrc
+      echo '# \\W カレントディレクトリ' >> /home/vagrant/.bashrc
+      echo '# \\w カレントディレクトリのパス' >> /home/vagrant/.bashrc
+      echo '# \\n 改行' >> /home/vagrant/.bashrc
+      echo '# \\d 日付' >> /home/vagrant/.bashrc
+      echo '# \\[ 表示させない文字列の開始' >> /home/vagrant/.bashrc
+      echo '# \\] 表示させない文字列の終了' >> /home/vagrant/.bashrc
+      echo '# \\$ $' >> /home/vagrant/.bashrc
+      echo 'export PS1='\\''\\[\\033[1;32m\\]\\u\\[\033[00m\\]:\\[\\033[1;34m\\]\\w\\[\\033[1;31m\\]$(__git_ps1)\\[\033[00m\\] \\$ '\\''' >> /home/vagrant/.bashrc
+      echo '##############' >> /home/vagrant/.bashrc
+    EOS
+  }
+])
 # user_env_setup.sh削除
 commands.concat([
   {
