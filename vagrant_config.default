@@ -1,29 +1,72 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
+#=======================================================
+# モジュール変数
+#=======================================================
+#===================
+# networkの設定
+#===================
+network = {
+  host_ip: '127.0.0.1',
+}
+
+
+#=======================================================
+# 設定
+#=======================================================
 if $vagrant_config.nil?
   $vagrant_config = {}
 end
-
 $vagrant_config = $vagrant_config.merge({
   vm: [
     {
       provider: {
-        name: 'develop_vm',
+        name: 'vm.develop',
         gui: false,
         memory: '2048',
       },
       network: [
+        # ssh vagrant defaultで設定されるので不要
         #{
         #  network_type: 'forwarded_port',
         #  auto_correct: false,
-        #  guest: 22,
-        #  guest_ip: nil,
+        #  host_ip: network[:host_ip],
         #  host: 2222,
-        #  host_ip: '127.0.0.1',
-        #  protocol: nil,
-        #  id: nil,
+        #  guest: 22,
+        #  id: 'ssh',
+        #  use_host_pf: true,
         #},
+        # http
+        {
+          network_type: 'forwarded_port',
+          auto_correct: false,
+          host_ip: network[:host_ip],
+          host: 10080,
+          guest: 80,
+          id: 'http',
+          use_host_pf: true,
+        },
+        # https
+        {
+          network_type: 'forwarded_port',
+          auto_correct: false,
+          host_ip: network[:host_ip],
+          host: 10443,
+          guest: 443,
+          id: 'https',
+          use_host_pf: true,
+        },
+        # mysql
+        {
+          network_type: 'forwarded_port',
+          auto_correct: false,
+          host_ip: network[:host_ip],
+          host: 13306,
+          guest: 3306,
+          id: 'mysql',
+          use_host_pf: true,
+        },
       ],
       provision: [
         {

@@ -1,6 +1,8 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
+require 'open3'
+
 #=======================================================
 # 設定情報読み込み
 #=======================================================
@@ -86,47 +88,96 @@ Vagrant.configure("2") do |config|
   single_vm[:network].each do | nw |
     case nw[:network_type]
     when 'forwarded_port' then
-      config.vm.network(
-        "forwarded_port",
-        auto_correct: nw[:auto_correct],
+      config.vm.network "forwarded_port",
+        auto_correct: nw.key?(:guest) ? nw[:auto_correct] : false,
         guest: nw[:guest],
-        guest_ip: nw[:guest_ip],
+        guest_ip: nw.key?(:guest_ip) ? nw[:guest_ip] : 'empty',
         host: nw[:host],
-        host_ip: nw[:host_ip],
-        protocol: nw[:protocol],
-        id: nw[:id]
-      )
+        host_ip: nw.key?(:host_ip) ? nw[:host_ip] : 'empty',
+        protocol: nw.key?(:protocol) ? nw[:protocol] : 'tcp',
+        id: nw.key?(:id) ? nw[:id] : ''
 
     when 'private_network' then
-      if nw.key?(:ip) then
-        config.vm.network(
-          "private_network",
-          ip: nw[:ip],
-          netmask: nw[:netmask],
-          auto_config: nw[:auto_config],
-        )
+      if nw.key?(:ip) && nw.key?(:netmask)
+        if nw.key?(:netmask)
+          config.vm.network "private_network",
+            ip: nw[:ip],
+            netmask: nw[:netmask],
+            auto_config: nw.key?(:auto_config) ? nw[:auto_config] : false
+        else
+          config.vm.network "private_network",
+            ip: nw[:ip],
+            auto_config: nw.key?(:auto_config) ? nw[:auto_config] : false
+        end
       else
         # dhcp
-        config.vm.network(
-          "private_network",
-          type: nw[:type]
-        )
+        config.vm.network "private_network",
+          type: nw.key?(:type) || 'dhcp'
       end
 
     when 'public_network' then
-      if nw.key?(:ip) || nw.key?(:bridge) || nw.key?(:auto_config) then
-        config.vm.network(
-          "public_network",
-          ip: nw[:ip],
-          bridge: nw[:bridge],
+      if nw.key?(:ip)
+        config.vm.network "public_network",
+          ip: nw[:ip]
+      elsif nw.key?(:bridge)
+        config.vm.network "public_network",
+          bridge: nw[:bridge]
+      elsif nw.key?(:auto_config)
+        config.vm.network "public_network",
           auto_config: nw[:auto_config]
-        )
       else
         # dhcp
-        config.vm.network(
-          "public_network",
-          use_dhcp_assigned_default_route: nw[:use_dhcp_assigned_default_route]
-        )
+        config.vm.network "public_network",
+          use_dhcp_assigned_default_route: nw.key?(:use_dhcp_assigned_default_route) ? nw[:use_dhcp_assigned_default_route] : false
+      end
+    end
+  end
+
+  # ホストのポートフォワード設定
+  is_windows = RbConfig::CONFIG['host_os'] =~ /mswin|msys|mingw|cygwin|bccwin/i
+  is_osx = RbConfig::CONFIG['host_os'] =~ /darwin/i
+  mac_once = false
+  single_vm[:network].each do | nw |
+    if nw[:use_host_pf]
+      ip = (nw.key(:guest_ip) && nw[:guest_ip] != 'empty') ? nw[:guest_ip] : '127.0.0.1'
+      host_port = nw[:host]
+      guest_port = nw[:guest]
+
+      # windows
+      if is_windows
+        # 参考: https://kagasu.hatenablog.com/entry/2018/01/29/184205
+
+        # up, reload 時に PF 設定
+        config.trigger.after [:provision, :up, :reload] do
+          Open3.capture3("netsh interface portproxy add v4tov4 listenport=#{host_port} listenaddr=#{ip} connectport=#{guest_port} connectaddress=#{ip}")
+        end
+
+        # halt, destroy 時に PF をリセット
+        config.trigger.after [:halt, :destroy] do
+          Open3.capture3("netsh interface portproxy delete v4tov4 listenport=#{host_port} listenaddr=#{ip}")
+        end
+
+      # mac
+      elsif is_osx
+        # 参考: https://qiita.com/hidekuro/items/a94025956a6fa5d5494f
+
+        # up, reload 時に PF 設定
+        config.trigger.after [:provision, :up, :reload] do
+          Open3.capture3("echo 'rdr pass on lo0 inet proto tcp from any to #{ip} port #{guest_port} -> #{ip} port #{host_port}' | sudo pfctl -ef - > /dev/null 2>&1")
+          Open3.capture3("echo 'set packet filter #{ip}:#{guest_port} -> #{ip}:#{host_port}'")
+        end
+
+        # halt, destroy 時に PF をリセット
+        if !mac_once
+          mac_once = true
+
+          config.trigger.after [:halt, :destroy] do
+            Open3.capture3("sudo pfctl -df /etc/pf.conf > /dev/null 2>&1")
+            Open3.capture3("echo 'reset packet filter'")
+          end
+        end
+      else
+        puts 'Sorry! not supported.'
       end
     end
   end

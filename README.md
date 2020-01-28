@@ -23,6 +23,7 @@
 ├─ .git                                       
 ├─ .gitignore                                 
 ├─ .vagrant                                   
+├─ ps_run.bat                                 パワーシェルを立ち上げるための.batファイルです。管理者権限で実行してください。
 ├─ boxes                                      ボックスファイルを格納するためのディレクトリです。
 │   ├─ .gitkeep                              
 │   └─ {{CentOS7_x8664_devenv.box}}          git管理ではありません。指定のダウンロード箇所からダウンロードし配置してください。
@@ -59,6 +60,7 @@
 
 # 環境構築手順
 ホスト環境はWindows10 PowerShellで検証しています。
+*PowerShellは管理者権限で実行してください。*
 ___
 
 1. PowerShellをインストールする  
@@ -108,6 +110,9 @@ ___
           # ゲストマシンのプロクシの設定を自動で行ってくれるプラグインです。
           vagrant plugin install vagrant-proxyconf
 
+          # vagrant-triggersは
+          # vagrantコマンドをトリガーとして指定した処理を実行するためのプラグインです。
+          vagrant plugin install vagrant-triggers
 
 1. ボックスイメージをダウンロードし配置する  
 
@@ -187,6 +192,7 @@ ___
 |[:vm][\*][:network][\*][:type]  |string  |  |  |
 |[:vm][\*][:network][\*][:bridge]  |string  |  |  |
 |[:vm][\*][:network][\*][:use_dhcp_assigned_default_route]  |string  |  |  |
+|[:vm][\*][:network][\*][:use_host_fp]  |bool  |  |  |
 |[:vm][\*][:provision]  |array  |  |  |
 |[:vm][\*][:provision][\*]  |hash  |  |  |
 |[:vm][\*][:provision][\*][:type]  |string  |  |'shell'固定  |
