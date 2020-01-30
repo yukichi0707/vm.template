@@ -148,13 +148,19 @@ Vagrant.configure("2") do |config|
         # 参考: https://kagasu.hatenablog.com/entry/2018/01/29/184205
 
         # up, reload 時に PF 設定
-        config.trigger.after [:provision, :up, :reload] do
-          Open3.capture3("netsh interface portproxy add v4tov4 listenport=#{host_port} listenaddr=#{ip} connectport=#{guest_port} connectaddress=#{ip}")
+        config.trigger.after [:provision, :up, :reload] do |trigger|
+          trigger.info = "netsh add:#{host_port} (host) => #{guest_port} (host)"
+          trigger.run = {
+            inline: "netsh interface portproxy add v4tov4 listenport=#{host_port} listenaddr=#{ip} connectport=#{guest_port} connectaddress=#{ip}"
+          }
         end
 
         # halt, destroy 時に PF をリセット
-        config.trigger.after [:halt, :destroy] do
-          Open3.capture3("netsh interface portproxy delete v4tov4 listenport=#{host_port} listenaddr=#{ip}")
+        config.trigger.after [:halt, :destroy] do |trigger|
+          trigger.info = "netsh del:#{host_port} (host) => #{guest_port} (host)"
+          trigger.run = {
+            inline: "netsh interface portproxy delete v4tov4 listenport=#{host_port} listenaddr=#{ip}"
+          }
         end
 
       # mac
@@ -162,18 +168,28 @@ Vagrant.configure("2") do |config|
         # 参考: https://qiita.com/hidekuro/items/a94025956a6fa5d5494f
 
         # up, reload 時に PF 設定
-        config.trigger.after [:provision, :up, :reload] do
-          Open3.capture3("echo 'rdr pass on lo0 inet proto tcp from any to #{ip} port #{guest_port} -> #{ip} port #{host_port}' | sudo pfctl -ef - > /dev/null 2>&1")
-          Open3.capture3("echo 'set packet filter #{ip}:#{guest_port} -> #{ip}:#{host_port}'")
+        config.trigger.after [:up, :reload, :provision] do |trigger|
+          trigger.info = "netsh add:#{host_port} (host) => #{guest_port} (host)"
+          trigger.run = {
+            inline: <<-EOS
+              echo 'rdr pass on lo0 inet proto tcp from any to #{ip} port #{guest_port} -> #{ip} port #{host_port}' | sudo pfctl -ef - > /dev/null 2>&1
+              echo 'set packet filter #{ip}:#{guest_port} -> #{ip}:#{host_port}'
+            EOS
+          }
         end
 
         # halt, destroy 時に PF をリセット
         if !mac_once
           mac_once = true
 
-          config.trigger.after [:halt, :destroy] do
-            Open3.capture3("sudo pfctl -df /etc/pf.conf > /dev/null 2>&1")
-            Open3.capture3("echo 'reset packet filter'")
+          config.trigger.after [:halt, :destroy] do |trigger|
+            trigger.info = "netsh del:#{host_port} (host) => #{guest_port} (host)"
+            trigger.run = {
+              inline: <<-EOS
+                sudo pfctl -df /etc/pf.conf > /dev/null 2>&1
+                echo 'reset packet filter'
+              EOS
+            }
           end
         end
       else
@@ -210,7 +226,8 @@ Vagrant.configure("2") do |config|
       if pv.key?(:inline) then
         config.vm.provision pv[:type],
           privileged: pv.key?(:privileged) ? pv[:privileged] : true,
-          inline: pv[:inline]
+          inline: pv[:inline],
+          reboot: false
       else
         puts "Sorry! `inline` only support!!"
       end
