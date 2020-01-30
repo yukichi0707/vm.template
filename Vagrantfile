@@ -91,9 +91,9 @@ Vagrant.configure("2") do |config|
       config.vm.network "forwarded_port",
         auto_correct: nw.key?(:guest) ? nw[:auto_correct] : false,
         guest: nw[:guest],
-        guest_ip: nw.key?(:guest_ip) ? nw[:guest_ip] : 'empty',
+        guest_ip: nw.key?(:guest_ip) ? nw[:guest_ip] : '',
         host: nw[:host],
-        host_ip: nw.key?(:host_ip) ? nw[:host_ip] : 'empty',
+        host_ip: nw.key?(:host_ip) ? nw[:host_ip] : '',
         protocol: nw.key?(:protocol) ? nw[:protocol] : 'tcp',
         id: nw.key?(:id) ? nw[:id] : ''
 
@@ -139,7 +139,7 @@ Vagrant.configure("2") do |config|
   mac_once = false
   single_vm[:network].each do | nw |
     if nw[:use_host_pf]
-      ip = (nw.key(:guest_ip) && nw[:guest_ip] != 'empty') ? nw[:guest_ip] : '127.0.0.1'
+      ip = (nw.key(:guest_ip) && nw[:guest_ip].empty?) ? nw[:guest_ip] : '127.0.0.1'
       host_port = nw[:host]
       guest_port = nw[:guest]
 
