@@ -91,11 +91,11 @@ Vagrant.configure("2") do |config|
       config.vm.network "forwarded_port",
         auto_correct: nw.key?(:guest) ? nw[:auto_correct] : false,
         guest: nw[:guest],
-        guest_ip: nw.key?(:guest_ip) ? nw[:guest_ip] : '',
+        guest_ip: nw.key?(:guest_ip) ? nw[:guest_ip] : nil,
         host: nw[:host],
-        host_ip: nw.key?(:host_ip) ? nw[:host_ip] : '',
+        host_ip: nw.key?(:host_ip) ? nw[:host_ip] : nil,
         protocol: nw.key?(:protocol) ? nw[:protocol] : 'tcp',
-        id: nw.key?(:id) ? nw[:id] : ''
+        id: nw.key?(:id) ? nw[:id] : nil
 
     when 'private_network' then
       if nw.key?(:ip) && nw.key?(:netmask)
@@ -138,28 +138,38 @@ Vagrant.configure("2") do |config|
   is_osx = RbConfig::CONFIG['host_os'] =~ /darwin/i
   mac_once = false
   single_vm[:network].each do | nw |
-    if nw[:use_host_pf]
-      ip = (nw.key(:guest_ip) && nw[:guest_ip].empty?) ? nw[:guest_ip] : '127.0.0.1'
-      host_port = nw[:host]
-      guest_port = nw[:guest]
+    if nw.key?(:host_pf)
+      ip = nw[:host_pf][:ip]
+      ports = nw[:host_pf][:ports] || []
 
       # windows
       if is_windows
         # 参考: https://kagasu.hatenablog.com/entry/2018/01/29/184205
 
+        command_of_add = ports.map{|v|
+          "netsh interface portproxy add v4tov4 listenport=#{v[:host]} listenaddr=#{ip} connectport=#{v[:guest]} connectaddress=#{ip}"
+        }.join("\n")
+        command_of_delete = ports.map{|v|
+          "netsh interface portproxy delete v4tov4 listenport=#{v[:host]} listenaddr=#{ip}"
+        }.join(";")
+
+        info = ports.map{|v|
+          "#{v[:host]} (host) => #{v[:guest]} (host)"
+        }.join("\n")
+
         # up, reload 時に PF 設定
         config.trigger.after [:provision, :up, :reload] do |trigger|
-          trigger.info = "netsh add:#{host_port} (host) => #{guest_port} (host)"
+          trigger.info = info
           trigger.run = {
-            inline: "netsh interface portproxy add v4tov4 listenport=#{host_port} listenaddr=#{ip} connectport=#{guest_port} connectaddress=#{ip}"
+            inline: command_of_add
           }
         end
 
         # halt, destroy 時に PF をリセット
         config.trigger.after [:halt, :destroy] do |trigger|
-          trigger.info = "netsh del:#{host_port} (host) => #{guest_port} (host)"
+          trigger.info = info
           trigger.run = {
-            inline: "netsh interface portproxy delete v4tov4 listenport=#{host_port} listenaddr=#{ip}"
+            inline: command_of_delete
           }
         end
 
@@ -167,31 +177,7 @@ Vagrant.configure("2") do |config|
       elsif is_osx
         # 参考: https://qiita.com/hidekuro/items/a94025956a6fa5d5494f
 
-        # up, reload 時に PF 設定
-        config.trigger.after [:up, :reload, :provision] do |trigger|
-          trigger.info = "netsh add:#{host_port} (host) => #{guest_port} (host)"
-          trigger.run = {
-            inline: <<-EOS
-              echo 'rdr pass on lo0 inet proto tcp from any to #{ip} port #{guest_port} -> #{ip} port #{host_port}' | sudo pfctl -ef - > /dev/null 2>&1
-              echo 'set packet filter #{ip}:#{guest_port} -> #{ip}:#{host_port}'
-            EOS
-          }
-        end
-
-        # halt, destroy 時に PF をリセット
-        if !mac_once
-          mac_once = true
-
-          config.trigger.after [:halt, :destroy] do |trigger|
-            trigger.info = "netsh del:#{host_port} (host) => #{guest_port} (host)"
-            trigger.run = {
-              inline: <<-EOS
-                sudo pfctl -df /etc/pf.conf > /dev/null 2>&1
-                echo 'reset packet filter'
-              EOS
-            }
-          end
-        end
+        puts 'Sorry! not supported.'
       else
         puts 'Sorry! not supported.'
       end
@@ -199,10 +185,15 @@ Vagrant.configure("2") do |config|
   end
 
   # SSH設定
+  default_nw_ssh = {
+    guest_port: 22,
+    host: '127.0.0.1',
+  }
+  nw_ssh = single_vm[:network].find(default_nw_ssh){|nw| nw[:id] == 'ssh' }
   config.ssh.insert_key = false
   config.ssh.username = "vagrant"
-  config.ssh.guest_port = 22
-  config.ssh.host = "127.0.0.1"
+  config.ssh.guest_port = nw_ssh[:guest]
+  config.ssh.host = nw_ssh[:host_ip]
   config.ssh.private_key_path = "./ssh/insecure_private_key"
 
   # プロクシ設定

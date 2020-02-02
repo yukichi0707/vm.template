@@ -8,7 +8,8 @@
 # networkの設定
 #===================
 network = {
-  host_ip: '127.0.0.1',
+  ssh_ip: '127.0.0.1',
+  ip: '192.168.1.33',
 }
 
 
@@ -27,45 +28,47 @@ $vagrant_config = $vagrant_config.merge({
         memory: '2048',
       },
       network: [
-        # ssh vagrant defaultで設定されるので不要
-        #{
-        #  network_type: 'forwarded_port',
-        #  auto_correct: false,
-        #  host_ip: network[:host_ip],
-        #  host: 2222,
-        #  guest: 22,
-        #  id: 'ssh',
-        #  use_host_pf: true,
-        #},
-        # http
+        # ssh vagrant defaultで設定されるので不要だがportを固定するために設定
         {
           network_type: 'forwarded_port',
           auto_correct: false,
-          host_ip: network[:host_ip],
-          host: 10080,
-          guest: 80,
-          id: 'http',
-          use_host_pf: true,
+          host_ip: network[:ssh_ip],
+          host: 10022,
+          guest: 22,
+          id: 'ssh',
+          host_pf: {
+            ip: network[:ssh_ip],
+            ports: [
+              {
+                host: 10022,
+                guest: 22,
+              },
+            ],
+          },
         },
-        # https
+        # ホストオンリーネットワーク
+        # ホスト-ゲスト間のみの通信で十分なのでこの設定
+        # https://maku77.github.io/vagrant/network-type.html
         {
-          network_type: 'forwarded_port',
-          auto_correct: false,
-          host_ip: network[:host_ip],
-          host: 10443,
-          guest: 443,
-          id: 'https',
-          use_host_pf: true,
-        },
-        # mysql
-        {
-          network_type: 'forwarded_port',
-          auto_correct: false,
-          host_ip: network[:host_ip],
-          host: 13306,
-          guest: 3306,
-          id: 'mysql',
-          use_host_pf: true,
+          network_type: 'private_network',
+          ip: network[:ip],
+          host_pf: {
+            ip: network[:ip],
+            ports: [
+              {
+                host: 10080,
+                guest: 80,
+              },
+              {
+                host: 10443,
+                guest: 443,
+              },
+              {
+                host: 13306,
+                guest: 3306,
+              },
+            ],
+          },
         },
       ],
       provision: [

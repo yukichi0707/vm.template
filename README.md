@@ -13,9 +13,7 @@
 - nginx
 - mariadb
 - php7.4
-- composer
 - nodejs/npm
-- yurn
 
 
 # ディレクトリ構成
@@ -178,7 +176,9 @@ ___
 |[:vm][\*][:usable_port_range]  |string  |  |  |
 |[:vm][\*][:network]  |array  |  |  |
 |[:vm][\*][:network][\*]  |hash  |  |  |
-|[:vm][\*][:network][\*][:network_type]  |string  |  |'forwarded_port' or 'private_network' or 'public_network'のいずれかを指定してください。  |
+|[:vm][\*][:network][\*][:forwarded_port]  |bool  |  |  |
+|[:vm][\*][:network][\*][:private_network]  |bool  |  |  |
+|[:vm][\*][:network][\*][:public_network]  |bool  |  |  |
 |[:vm][\*][:network][\*][:auto_correct]  |string  |  |  |
 |[:vm][\*][:network][\*][:guest]  |string  |  |  |
 |[:vm][\*][:network][\*][:guest_ip]  |string  |  |  |
@@ -192,7 +192,13 @@ ___
 |[:vm][\*][:network][\*][:type]  |string  |  |  |
 |[:vm][\*][:network][\*][:bridge]  |string  |  |  |
 |[:vm][\*][:network][\*][:use_dhcp_assigned_default_route]  |string  |  |  |
-|[:vm][\*][:network][\*][:use_host_fp]  |bool  |  |  |
+|[:vm][\*][:network][\*][:host_fp]  |array  |  |  |
+|[:vm][\*][:network][\*][:host_fp][*]  |hash  |  |  |
+|[:vm][\*][:network][\*][:host_fp][*][:ip]  |string  |  |  |
+|[:vm][\*][:network][\*][:host_fp][*][:ports]  |array  |  |  |
+|[:vm][\*][:network][\*][:host_fp][*][:ports][*]  |hash  |  |  |
+|[:vm][\*][:network][\*][:host_fp][*][:ports][*][:host]  |string  |  |  |
+|[:vm][\*][:network][\*][:host_fp][*][:ports][*][:guest]  |string  |  |  |
 |[:vm][\*][:provision]  |array  |  |  |
 |[:vm][\*][:provision][\*]  |hash  |  |  |
 |[:vm][\*][:provision][\*][:type]  |string  |  |'shell'固定  |

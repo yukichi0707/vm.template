@@ -1,6 +1,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 HOST = '127.0.0.1'
-PORT = '2222'
+PORT = '10022'
 USER = 'vagrant'
 PASS = 'vagrant'
 KEY_FILE = 'insecure_private_key'
