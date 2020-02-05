@@ -1,8 +1,6 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-require 'open3'
-
 #=======================================================
 # 設定情報読み込み
 #=======================================================
@@ -99,16 +97,14 @@ Vagrant.configure("2") do |config|
 
     when 'private_network' then
       if nw.key?(:ip) && nw.key?(:netmask)
-        if nw.key?(:netmask)
-          config.vm.network "private_network",
-            ip: nw[:ip],
-            netmask: nw[:netmask],
-            auto_config: nw.key?(:auto_config) ? nw[:auto_config] : false
-        else
-          config.vm.network "private_network",
-            ip: nw[:ip],
-            auto_config: nw.key?(:auto_config) ? nw[:auto_config] : false
-        end
+        config.vm.network "private_network",
+          ip: nw[:ip],
+          netmask: nw[:netmask],
+          auto_config: nw.key?(:auto_config) ? nw[:auto_config] : true
+      elsif nw.key?(:ip)
+        config.vm.network "private_network",
+          ip: nw[:ip],
+          auto_config: nw.key?(:auto_config) ? nw[:auto_config] : true
       else
         # dhcp
         config.vm.network "private_network",
@@ -192,8 +188,8 @@ Vagrant.configure("2") do |config|
   nw_ssh = single_vm[:network].find(default_nw_ssh){|nw| nw[:id] == 'ssh' }
   config.ssh.insert_key = false
   config.ssh.username = "vagrant"
-  config.ssh.guest_port = nw_ssh[:guest]
   config.ssh.host = nw_ssh[:host_ip]
+  config.ssh.guest_port = nw_ssh[:guest]
   config.ssh.private_key_path = "./ssh/insecure_private_key"
 
   # プロクシ設定
