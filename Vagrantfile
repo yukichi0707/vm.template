@@ -134,7 +134,7 @@ Vagrant.configure("2") do |config|
   is_osx = RbConfig::CONFIG['host_os'] =~ /darwin/i
   mac_once = false
   single_vm[:network].each do | nw |
-    if nw.key?(:host_pf)
+    if nw.key?(:host_pf) && nw[:host_pf].key?(:use) && nw[:host_pf][:use]
       ip = nw[:host_pf][:ip]
       ports = nw[:host_pf][:ports] || []
 
