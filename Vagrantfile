@@ -181,15 +181,10 @@ Vagrant.configure("2") do |config|
   end
 
   # SSH設定
-  default_nw_ssh = {
-    guest_port: 22,
-    host: '127.0.0.1',
-  }
-  nw_ssh = single_vm[:network].find(default_nw_ssh){|nw| nw[:id] == 'ssh' }
   config.ssh.insert_key = false
   config.ssh.username = "vagrant"
-  config.ssh.host = nw_ssh[:host_ip]
-  config.ssh.guest_port = nw_ssh[:guest]
+  config.ssh.host = '127.0.0.1'
+  config.ssh.guest_port = 22
   config.ssh.private_key_path = "./ssh/insecure_private_key"
 
   # プロクシ設定

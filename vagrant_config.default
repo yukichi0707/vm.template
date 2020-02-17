@@ -33,19 +33,9 @@ $vagrant_config = $vagrant_config.merge({
           network_type: 'forwarded_port',
           auto_correct: false,
           host_ip: network[:ssh_ip],
-          host: 10022,
+          host: 2222,
           guest: 22,
           id: 'ssh',
-          #host_pf: {
-          #  use: false,
-          #  ip: network[:ssh_ip],
-          #  ports: [
-          #    {
-          #      host: 10022,
-          #      guest: 22,
-          #    },
-          #  ],
-          #},
         },
         # ホストオンリーネットワーク
         # ホスト-ゲスト間のみの通信で十分なのでこの設定
