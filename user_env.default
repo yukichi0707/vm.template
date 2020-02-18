@@ -5,6 +5,14 @@
 # モジュール変数
 #=======================================================
 #===================
+# pathの設定
+#===================
+path = {
+  bashrc: '~/.bashrc',
+  local_bin: '/usr/local/bin',
+}
+
+#===================
 # sshの設定
 #===================
 ssh = {
@@ -22,6 +30,7 @@ git = {
     email: '',
   },
 }
+
 
 #===================
 # user_env_setup.sh作成
@@ -72,15 +81,25 @@ if ssh[:use] then
     {
       op: 'shell',
       shell: <<-EOS
-        echo '# Setup ssh-agent' >> /home/vagrant/.bashrc
-        echo 'if [ -f ~/.ssh-agent ]; then' >> /home/vagrant/.bashrc
-        echo '    . ~/.ssh-agent' >> /home/vagrant/.bashrc
-        echo 'fi' >> /home/vagrant/.bashrc
-        echo 'if [ -z "$SSH_AGENT_PID" ] || ! kill -0 $SSH_AGENT_PID; then' >> /home/vagrant/.bashrc
-        echo '    ssh-agent > ~/.ssh-agent' >> /home/vagrant/.bashrc
-        echo '    . ~/.ssh-agent' >> /home/vagrant/.bashrc
-        echo 'fi' >> /home/vagrant/.bashrc
-        ssh-add -l >& /dev/null || ssh-add' >> /home/vagrant/.bashrc
+        echo '# Setup direnv' >> #{path[:bashrc]}
+        echo '# Setup direnv' >> #{path[:bashrc]}
+      EOS
+    },
+  ])
+  commands.concat([
+    # .bashrc追加 ログイン時にssh-agent起動
+    {
+      op: 'shell',
+      shell: <<-EOS
+        echo '# Setup ssh-agent' >> #{path[:bashrc]}
+        echo 'if [ -f ~/.ssh-agent ]; then' >> #{path[:bashrc]}
+        echo '    . ~/.ssh-agent' >> #{path[:bashrc]}
+        echo 'fi' >> #{path[:bashrc]}
+        echo 'if [ -z "$SSH_AGENT_PID" ] || ! kill -0 $SSH_AGENT_PID; then' >> #{path[:bashrc]}
+        echo '    ssh-agent > ~/.ssh-agent' >> #{path[:bashrc]}
+        echo '    . ~/.ssh-agent' >> #{path[:bashrc]}
+        echo 'fi' >> #{path[:bashrc]}
+        ssh-add -l >& /dev/null || ssh-add' >> #{path[:bashrc]}
       EOS
     },
   ])
@@ -122,37 +141,37 @@ commands.concat([
     op: 'shell',
     shell: <<-EOS
       # git-completion.bash取得
-      curl -s https://raw.githubusercontent.com/git/git/master/contrib/completion/git-completion.bash > /home/vagrant/.git-completion.bash
-      chown vagrant:vagrant /home/vagrant/.git-completion.bash
-      chmod 644 /home/vagrant/.git-completion.bash
+      sudo curl -s -o #{path[:local_bin]} https://raw.githubusercontent.com/git/git/master/contrib/completion/git-completion.bash
+      sudo chown vagrant:vagrant /home/vagrant/.git-completion.bash
+      sudo chmod 774 /home/vagrant/.git-completion.bash
 
       # git-prompt.sh取得
-      curl -s https://raw.githubusercontent.com/git/git/master/contrib/completion/git-prompt.sh > /home/vagrant/.git-prompt.sh
-      chown vagrant:vagrant /home/vagrant/.git-prompt.sh
-      chmod 644 /home/vagrant/.git-prompt.sh
+      sudo curl -s -o #{path[:local_bin]} https://raw.githubusercontent.com/git/git/master/contrib/completion/git-prompt.sh > /home/vagrant/.git-prompt.sh
+      sudo chown vagrant:vagrant /home/vagrant/.git-prompt.sh
+      sudo chmod 774 /home/vagrant/.git-prompt.sh
 
       # .bashrcに追加
-      echo '# .git-completion' >> /home/vagrant/.bashrc
-      echo "source ~/.git-completion.bash" >> ~/.bashrc
-      echo '# .git-prompt' >> /home/vagrant/.bashrc
-      echo 'source ~/.git-prompt.sh' >> /home/vagrant/.bashrc
-      echo '# プロンプトに各種情報を表示' >> /home/vagrant/.bashrc
-      echo 'GIT_PS1_SHOWDIRTYSTATE=1' >> /home/vagrant/.bashrc
-      echo 'GIT_PS1_SHOWUPSTREAM=1' >> /home/vagrant/.bashrc
-      echo 'GIT_PS1_SHOWUNTRACKEDFILES=' >> /home/vagrant/.bashrc
-      echo 'GIT_PS1_SHOWSTASHSTATE=1' >> /home/vagrant/.bashrc
-      echo '############### ターミナルのコマンド受付状態の表示変更' >> /home/vagrant/.bashrc
-      echo '# \\u ユーザ名' >> /home/vagrant/.bashrc
-      echo '# \\h ホスト名' >> /home/vagrant/.bashrc
-      echo '# \\W カレントディレクトリ' >> /home/vagrant/.bashrc
-      echo '# \\w カレントディレクトリのパス' >> /home/vagrant/.bashrc
-      echo '# \\n 改行' >> /home/vagrant/.bashrc
-      echo '# \\d 日付' >> /home/vagrant/.bashrc
-      echo '# \\[ 表示させない文字列の開始' >> /home/vagrant/.bashrc
-      echo '# \\] 表示させない文字列の終了' >> /home/vagrant/.bashrc
-      echo '# \\$ $' >> /home/vagrant/.bashrc
-      echo 'export PS1='\\''\\[\\033[1;32m\\]\\u\\[\033[00m\\]:\\[\\033[1;34m\\]\\W\\[\\033[1;31m\\]$(__git_ps1)\\[\033[00m\\] \\$ '\\''' >> /home/vagrant/.bashrc
-      echo '##############' >> /home/vagrant/.bashrc
+      echo '# .git-completion' >> #{path[:bashrc]}
+      echo "source #{path[:local_bin]}/.git-completion.bash" >> #{path[:bashrc]}
+      echo '# .git-prompt' >> #{path[:bashrc]}
+      echo 'source #{path[:local_bin]}/.git-prompt.sh' >> #{path[:bashrc]}
+      echo '# プロンプトに各種情報を表示' >> #{path[:bashrc]}
+      echo 'GIT_PS1_SHOWDIRTYSTATE=1' >> #{path[:bashrc]}
+      echo 'GIT_PS1_SHOWUPSTREAM=1' >> #{path[:bashrc]}
+      echo 'GIT_PS1_SHOWUNTRACKEDFILES=' >> #{path[:bashrc]}
+      echo 'GIT_PS1_SHOWSTASHSTATE=1' >> #{path[:bashrc]}
+      echo '############### ターミナルのコマンド受付状態の表示変更' >> #{path[:bashrc]}
+      echo '# \\u ユーザ名' >> #{path[:bashrc]}
+      echo '# \\h ホスト名' >> #{path[:bashrc]}
+      echo '# \\W カレントディレクトリ' >> #{path[:bashrc]}
+      echo '# \\w カレントディレクトリのパス' >> #{path[:bashrc]}
+      echo '# \\n 改行' >> #{path[:bashrc]}
+      echo '# \\d 日付' >> #{path[:bashrc]}
+      echo '# \\[ 表示させない文字列の開始' >> #{path[:bashrc]}
+      echo '# \\] 表示させない文字列の終了' >> #{path[:bashrc]}
+      echo '# \\$ $' >> #{path[:bashrc]}
+      echo 'export PS1='\\''\\[\\033[1;32m\\]\\u\\[\033[00m\\]:\\[\\033[1;34m\\]\\W\\[\\033[1;31m\\]$(__git_ps1)\\[\033[00m\\] \\$ '\\''' >> #{path[:bashrc]}
+      echo '##############' >> #{path[:bashrc]}
     EOS
   }
 ])

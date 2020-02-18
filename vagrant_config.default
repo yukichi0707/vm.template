@@ -64,6 +64,15 @@ $vagrant_config = $vagrant_config.merge({
             echo '# vagrant config provision start'
             echo '#======================================================='
 
+            echo '#==================='
+            echo '# direnvインストール'
+            echo '#==================='
+            git clone https://github.com/direnv/direnv
+            cd direnv
+            sudo make install
+            cd ..
+            rm -rf dirnv 
+
             echo '#======================================================='
             echo '# vagrant config provision end'
             echo '#======================================================='
