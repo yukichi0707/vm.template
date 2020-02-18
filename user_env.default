@@ -5,15 +5,6 @@
 # モジュール変数
 #=======================================================
 #===================
-# pathの設定
-#===================
-path = {
-  root_bashrc: '/root/.bashrc',
-  vagrant_bashrc: '~/.bashrc',
-  local_bin: '/usr/local/bin',
-}
-
-#===================
 # sshの設定
 #===================
 ssh = {
@@ -30,6 +21,15 @@ git = {
     name: '',
     email: '',
   },
+}
+
+#===================
+# pathの設定
+#===================
+path = {
+  root_bashrc: '/root/.bashrc',
+  vagrant_bashrc: '~/.bashrc',
+  local_bin: '/usr/local/bin',
 }
 
 
@@ -101,7 +101,7 @@ if ssh[:use] then
         echo '    ssh-agent > ~/.ssh-agent' >> #{path[:vagrant_bashrc]}
         echo '    . ~/.ssh-agent' >> #{path[:vagrant_bashrc]}
         echo 'fi' >> #{path[:vagrant_bashrc]}
-        ssh-add -l >& /dev/null || ssh-add' >> #{path[:vagrant_bashrc]}
+        echo 'ssh-add -l >& /dev/null || ssh-add' >> #{path[:vagrant_bashrc]}
       EOS
     },
   ])

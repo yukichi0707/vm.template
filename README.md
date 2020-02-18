@@ -14,7 +14,6 @@
 - mariadb
 - php7.4
 - nodejs/npm
-- direnv
 
 
 # ディレクトリ構成
