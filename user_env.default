@@ -27,9 +27,10 @@ git = {
 # pathの設定
 #===================
 path = {
+  local_bin: '/usr/local/bin',
   root_bashrc: '/root/.bashrc',
   vagrant_bashrc: '~/.bashrc',
-  local_bin: '/usr/local/bin',
+  vagrant_direnvrc: '~/.direnvrc'
 }
 
 
@@ -77,17 +78,6 @@ if ssh[:use] then
       ])
     end
   }
-  commands.concat([
-    # .bashrc追加 ログイン時にssh-agent起動
-    {
-      op: 'shell',
-      shell: <<-EOS
-        echo '# Setup direnv' >> #{path[:vagrant_bashrc]}
-        echo 'export EDITOR=vim' >> #{path[:vagrant_bashrc]}
-        echo 'eval "$(direnv hook bash)"' >> #{path[:vagrant_bashrc]}
-      EOS
-    },
-  ])
   commands.concat([
     # .bashrc追加 ログイン時にssh-agent起動
     {
@@ -180,6 +170,40 @@ commands.concat([
       # /root/.bashrcに追加
       sudo sh -c "echo '# PS1設定' >> #{path[:root_bashrc]}"
       sudo sh -c "echo 'export PS1='\\''\\[\\e[1;31m\\][\\u@\\h \\W]# \\[\\e[0m\\]'\\''' >> #{path[:root_bashrc]}"
+    EOS
+  }
+])
+# direnvrc追加
+commands.concat([
+  {
+    op: 'shell',
+    shell: <<-EOS
+      # direnvrc追記
+      echo '# Setup direnv' >> #{path[:vagrant_bashrc]}
+      echo 'export EDITOR=vim' >> #{path[:vagrant_bashrc]}
+      echo 'eval "$(direnv hook bash)"' >> #{path[:vagrant_bashrc]}
+
+      # direnvrc追記
+      echo 'ALIASES_DIR=".direnvrc/aliases"' >> #{path[:vagrant_direnvrc]}
+      echo '' >> #{path[:vagrant_direnvrc]}
+      echo 'export_function() {' >> #{path[:vagrant_direnvrc]}
+      echo '  local name=$1' >> #{path[:vagrant_direnvrc]}
+      echo '  local alias_dir=$PWD/${ALIASES_DIR}' >> #{path[:vagrant_direnvrc]}
+      echo '  mkdir -p "$alias_dir"' >> #{path[:vagrant_direnvrc]}
+      echo '  PATH_add "$alias_dir"' >> #{path[:vagrant_direnvrc]}
+      echo '  local target="$alias_dir/$name"' >> #{path[:vagrant_direnvrc]}
+      echo '  if declare -f "$name" >/dev/null; then' >> #{path[:vagrant_direnvrc]}
+      echo '    echo "#!/usr/bin/env bash" > "$target"' >> #{path[:vagrant_direnvrc]}
+      echo '    declare -f "$name" >> "$target" 2>/dev/null' >> #{path[:vagrant_direnvrc]}
+      echo '    echo "$name" '"$@"' >> "$target"' >> #{path[:vagrant_direnvrc]}
+      echo '    chmod +x "$target"' >> #{path[:vagrant_direnvrc]}
+      echo '  fi' >> #{path[:vagrant_direnvrc]}
+      echo '}' >> #{path[:vagrant_direnvrc]}
+      echo '' >> #{path[:vagrant_direnvrc]}
+      echo 'clear_direnvrc_aliases() {' >> #{path[:vagrant_direnvrc]}
+      echo '  local alias_dir=$PWD/${ALIASES_DIR}' >> #{path[:vagrant_direnvrc]}
+      echo '  rm -rf $alias_dir/*' >> #{path[:vagrant_direnvrc]}
+      echo '}' >> #{path[:vagrant_direnvrc]}
     EOS
   }
 ])
