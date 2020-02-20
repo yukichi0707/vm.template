@@ -44,16 +44,6 @@ $vagrant_config = $vagrant_config.merge({
           network_type: 'private_network',
           ip: network[:ip_00],
           auto_config: true,
-          #host_pf: {
-          #  use: false,
-          #  ip: network[:ip_00],
-          #  ports: [
-          #    {
-          #      host: 10080,
-          #      guest: 80,
-          #    },
-          #  ],
-          #},
         },
       ],
       provision: [

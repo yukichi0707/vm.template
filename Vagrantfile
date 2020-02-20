@@ -129,57 +129,6 @@ Vagrant.configure("2") do |config|
     end
   end
 
-  # ホストのポートフォワード設定
-  is_windows = RbConfig::CONFIG['host_os'] =~ /mswin|msys|mingw|cygwin|bccwin/i
-  is_osx = RbConfig::CONFIG['host_os'] =~ /darwin/i
-  mac_once = false
-  single_vm[:network].each do | nw |
-    if nw.key?(:host_pf) && nw[:host_pf].key?(:use) && nw[:host_pf][:use]
-      ip = nw[:host_pf][:ip]
-      ports = nw[:host_pf][:ports] || []
-
-      # windows
-      if is_windows
-        # 参考: https://kagasu.hatenablog.com/entry/2018/01/29/184205
-
-        command_of_add = ports.map{|v|
-          "netsh interface portproxy add v4tov4 listenport=#{v[:host]} listenaddr=#{ip} connectport=#{v[:guest]} connectaddress=#{ip}"
-        }.join("\n")
-        command_of_delete = ports.map{|v|
-          "netsh interface portproxy delete v4tov4 listenport=#{v[:host]} listenaddr=#{ip}"
-        }.join(";")
-
-        info = ports.map{|v|
-          "#{v[:host]} (host) => #{v[:guest]} (host)"
-        }.join("\n")
-
-        # up, reload 時に PF 設定
-        config.trigger.after [:provision, :up, :reload] do |trigger|
-          trigger.info = info
-          trigger.run = {
-            inline: command_of_add
-          }
-        end
-
-        # halt, destroy 時に PF をリセット
-        config.trigger.after [:halt, :destroy] do |trigger|
-          trigger.info = info
-          trigger.run = {
-            inline: command_of_delete
-          }
-        end
-
-      # mac
-      elsif is_osx
-        # 参考: https://qiita.com/hidekuro/items/a94025956a6fa5d5494f
-
-        puts 'Sorry! not supported.'
-      else
-        puts 'Sorry! not supported.'
-      end
-    end
-  end
-
   # SSH設定
   config.ssh.insert_key = false
   config.ssh.username = "vagrant"
