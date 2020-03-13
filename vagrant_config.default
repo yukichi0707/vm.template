@@ -55,9 +55,23 @@ $vagrant_config = $vagrant_config.merge({
             echo '#======================================================='
 
             echo '#==================='
+            echo '# 監視ファイルの上限設定'
+            echo '#==================='
+            sudo sh -c "echo 'fs.inotify.max_user_watches=524288' >> /etc/sysctl.conf"
+            sudo sysctl -p
+
+            echo '#==================='
             echo '# direnvインストール'
             echo '#==================='
             curl -sfL https://direnv.net/install.sh | bash
+
+            echo '#==================='
+            echo '# AWS CLIインストール'
+            echo '#==================='
+            curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
+            python get-pip.py
+            pip install awscli
+            #aws configure
 
             echo '#======================================================='
             echo '# vagrant config provision end'
