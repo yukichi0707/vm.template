@@ -108,10 +108,6 @@
           # ゲストマシンのプロクシの設定を自動で行ってくれるプラグインです。
           vagrant plugin install vagrant-proxyconf
 
-          # vagrant-triggersは
-          # vagrantコマンドをトリガーとして指定した処理を実行するためのプラグインです。
-          vagrant plugin install vagrant-triggers
-
 1. ボックスイメージをダウンロードし配置する  
 
     [ボックスイメージ](https://drive.google.com/open?id=1ubn7_ZjV167glSgsGAXnD7OTjR73gODr)をダウンロードし  
