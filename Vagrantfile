@@ -1,19 +1,19 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
+require "fileutils"
+
 #=======================================================
 # 設定情報読み込み
 #=======================================================
 # ユーザ設定ファイル読み込み
 path = __dir__ + '/' + 'user_env'
-if File.file?(path)
-  load path
-else 
-  path = __dir__ + '/' + 'user_env.default'
-  if File.file?(path)
-    load path
-  end
+if !File.file?(path)
+  default_path = __dir__ + '/' + 'user_env.default'
+  FileUtils.cp(default_path, path)
+  puts 'created a file.(' + path + ')'
 end
+load path
 #puts '#======================================================='
 #puts '# ユーザ設定'
 #puts '#======================================================='
@@ -23,19 +23,18 @@ end
 
 # vagrant設定ファイル読み込み
 path = __dir__ + '/' + 'vagrant_config'
-if File.file?(path)
-  load path
-else 
-  path = __dir__ + '/' + 'vagrant_config.default'
-  if File.file?(path)
-    load path
-  end
+if !File.file?(path)
+  default_path = __dir__ + '/' + 'vagrant_config.default'
+  FileUtils.cp(default_path, path)
+  puts 'created a file.(' + path + ')'
 end
+load path
 #puts '#======================================================='
 #puts '# vagrant設定情報'
 #puts '#======================================================='
 #puts $vagrant_config
 #puts ''
+
 
 # 設定情報をマージ
 user_proxy = $user_env[:proxy]
