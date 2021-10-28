@@ -9,11 +9,6 @@
 - git
 - docker
 - docker-compose
-- apache2.4
-- nginx
-- mariadb
-- php7.4
-- nodejs/npm
 
 
 # ディレクトリ構成
@@ -21,7 +16,6 @@
 ├─ .git                                       
 ├─ .gitignore                                 
 ├─ .vagrant                                   
-├─ ps_run.bat                                 パワーシェルを立ち上げるための.batファイルです。PowerShellを管理者権限で実行するための.batファイルです。
 ├─ boxes                                      ボックスファイルを格納するためのディレクトリです。
 │   ├─ .gitkeep                              
 │   └─ {{CentOS7_x8664_devenv.box}}          git管理ではありません。指定のダウンロード箇所からダウンロードし配置してください。
@@ -37,8 +31,8 @@
 │   │   │   └─ .gitkeep                    
 │   │   └─ home                             
 │   │        └─ vagrant                     ユーザ個人の設定ファイルを格納するためのディレクトリです。dotfile等
-│   │             └─ .gitkeep               
-│   ├─ tmp                                   一時ファイルを格納するためのディレクトリです。
+│   │             └─ .gitkeep           
+│   ├─ tmp                                   一時ファイルを格納するためのディレクトリで
 │   │   ├─ .gitkeep                         
 │   │   └─ user_env                         user_envで作成した一時ファイルを格納するためのディレクトリです。
 │   │        ├─ .gitkeep                    
@@ -112,19 +106,6 @@
 
     [ボックスイメージ](https://drive.google.com/open?id=1ubn7_ZjV167glSgsGAXnD7OTjR73gODr)をダウンロードし  
     `C:\Users\User\work\vm.template\boxes`ディレクトリ配下に配置してください。
-
-1. 設定ファイルを作成する
-
-        # 自身で作成した作業ディレクトリに移動してください。
-        cd C:\Users\User\work\vm.template
-
-        # proxyの設定などユーザ情報を設定するファイル。
-        # user_envについては別項記載
-        cp user_env.default user_env
-
-        # VMの設定などプロジェクト情報を設定するファイル。
-        # vagrant_configについては別項記載
-        cp vagrant_config.default vagrant_config
 
 1. vagrantを立ち上げる
 
